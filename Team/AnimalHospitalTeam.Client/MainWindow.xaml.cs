@@ -48,7 +48,19 @@ public partial class MainWindow : Window
         _timer.Start();
         _commandTimer.Tick += (_, _) => CancelCommand();
         _keyboard.KeyPressed += HandleGlobalKey;
-        _keyboard.Start();
+        SourceInitialized += (_, _) =>
+        {
+            if (_keyboard.Start())
+            {
+                HotkeyStatusText.Text = "End: commands";
+                HotkeyStatusText.Foreground = new SolidColorBrush(Color.FromRgb(174, 185, 200));
+            }
+            else
+            {
+                HotkeyStatusText.Text = $"Hotkeys unavailable (Windows error {_keyboard.LastError})";
+                HotkeyStatusText.Foreground = new SolidColorBrush(Color.FromRgb(242, 121, 121));
+            }
+        };
         Closed += (_, _) =>
         {
             _keyboard.Dispose();

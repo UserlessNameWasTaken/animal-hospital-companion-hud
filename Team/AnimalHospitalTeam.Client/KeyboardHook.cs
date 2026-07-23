@@ -13,15 +13,26 @@ public sealed class KeyboardHook : IDisposable
     private IntPtr _hook;
 
     public event Func<Key, bool>? KeyPressed;
+    public bool IsInstalled => _hook != IntPtr.Zero;
+    public int LastError { get; private set; }
 
     public KeyboardHook() => _callback = HookCallback;
 
-    public void Start()
+    public bool Start()
     {
-        if (_hook != IntPtr.Zero) return;
+        if (_hook != IntPtr.Zero) return true;
         using var process = Process.GetCurrentProcess();
         using var module = process.MainModule;
-        _hook = SetWindowsHookEx(WhKeyboardLl, _callback, GetModuleHandle(module?.ModuleName), 0);
+        var moduleHandle = GetModuleHandle(module?.ModuleName);
+        _hook = SetWindowsHookEx(WhKeyboardLl, _callback, moduleHandle, 0);
+        if (_hook == IntPtr.Zero)
+        {
+            LastError = Marshal.GetLastWin32Error();
+            _hook = SetWindowsHookEx(WhKeyboardLl, _callback, IntPtr.Zero, 0);
+        }
+        if (_hook == IntPtr.Zero) LastError = Marshal.GetLastWin32Error();
+        else LastError = 0;
+        return _hook != IntPtr.Zero;
     }
 
     private IntPtr HookCallback(int code, IntPtr message, IntPtr data)
