@@ -8,43 +8,49 @@ The experimental single-player Run HUD, movement tracking, and vision tools are
 still being calibrated and are intentionally not included in this public
 release.
 
-## Requirements
+## Install for Windows
 
-- Windows 11
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) to build from
-  source
-- Borderless-windowed Roblox is recommended
+No command prompt or development tools are required:
 
-## Build double-clickable executables
+1. Open the repository's
+   [Releases](https://github.com/UserlessNameWasTaken/animal-hospital-companion-hud/releases/latest).
+2. Download **AnimalHospitalTeamHUD-Windows-x64.zip**.
+3. Right-click the ZIP and select **Extract All**.
+4. Open the extracted folder.
+5. Double-click **AnimalHospitalTeamHUD.exe**.
 
-Double-click `Publish Windows Apps.cmd`. It creates two self-contained Windows
-applications:
+Windows SmartScreen may show an **Unknown publisher** warning because this
+personal project is not code-signed. Select **More info**, verify that the file
+came from this repository, and choose **Run anyway** if you trust it.
 
-- `dist\AnimalHospitalTeamHUD\AnimalHospitalTeam.Client.exe`
-- `dist\AnimalHospitalTeamRelay\AnimalHospitalTeam.Relay.exe`
+Ordinary players only need the Team HUD ZIP. The separate relay ZIP is for the
+person hosting the shared server.
 
-The published Team HUD does not require teammates to install .NET. Keep each
-published folder together when copying or zipping it.
+## Use the Team HUD
 
-## Run from source
-
-Start the relay:
-
-```powershell
-dotnet run --project Team\AnimalHospitalTeam.Relay --urls http://127.0.0.1:5188
-```
-
-Start up to four Team HUD clients:
-
-```powershell
-dotnet run --project Team\AnimalHospitalTeam.Client
-```
-
-The first player selects **Create** and shares the generated team code and
-private key. Teammates enter unique names and join with those values.
+Enter your display name, the relay server address, team code, and private key,
+then select **Join**. The first player may select **Create** when connected to a
+relay.
 
 See [Team/README.md](Team/README.md) for interaction details, automatic
 reconnection behavior, and the complete global `End` command table.
+
+## Build from source
+
+Developers need Windows 11 and the
+[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+Double-click `Publish Windows Apps.cmd` to create:
+
+- `dist\AnimalHospitalTeamHUD-Windows-x64.zip`
+- `dist\AnimalHospitalTeamRelay-Windows-x64.zip`
+
+Or start the projects directly:
+
+```powershell
+dotnet run --project Team\AnimalHospitalTeam.Relay --urls http://127.0.0.1:5188
+dotnet run --project Team\AnimalHospitalTeam.Client
+```
 
 ## Current relay limitations
 
