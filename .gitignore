@@ -1,0 +1,49 @@
+# .NET build output
+**/bin/
+**/obj/
+dist/
+
+# IDE and local agent metadata
+.vs/
+.vscode/
+.idea/
+.codex/
+.agents/
+*.user
+*.suo
+
+# Python caches and virtual environments
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local runtime state and logs
+*.pid
+*.log
+state.json
+traversals/
+
+# Local relay/test harnesses
+Team/.relay.pid
+Team/test-team-sync.mjs
+Team/Run-FourClientTest.ps1
+Team/Run Four Client Test.cmd
+Team/Stop-LocalRelay.ps1
+Team/.buildcheck/
+.buildcheck/
+
+# Captured gameplay and generated research artifacts
+dataset/raw/
+dataset/derived/
+dataset/manifest.csv
+dataset/analysis/*
+!dataset/analysis/location_model.npz
+
+# Offline model-development tools; runtime probe dependencies are retained.
+tools/benchmark_entry_signs.py
+
+# OS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
