@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Animal Hospital Team HUD" Width="820" Height="540"
         MinWidth="760" MinHeight="510" Background="#121820"
+        Topmost="True"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <Style TargetType="Button">
@@ -140,9 +141,12 @@
             <StackPanel Orientation="Horizontal">
                 <Ellipse x:Name="ConnectionDot" Width="9" Height="9" Fill="#E16B6B" Margin="0,0,6,0"/>
                 <TextBlock x:Name="StatusText" Text="Not connected" Foreground="#F3C969"/>
+                <TextBlock Text="  •  " Foreground="#78869A"/>
+                <TextBlock x:Name="HotkeyStatusText" Text="End: commands" Foreground="#AEB9C8"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <CheckBox x:Name="TopmostCheck" Content="Always on top" Foreground="#AEB9C8"
+                          IsChecked="True"
                           VerticalAlignment="Center" Margin="0,0,12,0"
                           Checked="Topmost_Changed" Unchecked="Topmost_Changed"/>
                 <TextBlock x:Name="RevisionText" Foreground="#78869A" VerticalAlignment="Center"/>
