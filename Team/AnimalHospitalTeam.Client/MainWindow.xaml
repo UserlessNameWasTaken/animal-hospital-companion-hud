@@ -1,0 +1,152 @@
+<Window x:Class="AnimalHospitalTeam.Client.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Animal Hospital Team HUD" Width="820" Height="540"
+        MinWidth="760" MinHeight="510" Background="#121820"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#26303E"/>
+            <Setter Property="Foreground" Value="#EAF0F7"/>
+            <Setter Property="BorderBrush" Value="#536174"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Margin" Value="2"/>
+        </Style>
+        <Style x:Key="RoomButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Width" Value="58"/>
+            <Setter Property="Height" Value="54"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#1C2530"/>
+            <Setter Property="Foreground" Value="#EAF0F7"/>
+            <Setter Property="BorderBrush" Value="#536174"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="2"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Border Background="#202936" CornerRadius="8" Padding="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="135"/>
+                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="NameBox" Grid.Column="0" ToolTip="Your team display name"/>
+                <TextBox x:Name="RoomCodeBox" Grid.Column="1" ToolTip="Team code"/>
+                <TextBox x:Name="SecretBox" Grid.Column="2" ToolTip="Private team key"/>
+                <TextBox x:Name="ServerBox" Grid.Column="3" Text="http://127.0.0.1:5188"
+                         ToolTip="Relay server URL"/>
+                <StackPanel Grid.Column="4" Orientation="Horizontal">
+                    <Button Content="CREATE" Click="Create_Click"/>
+                    <Button Content="JOIN" Click="Join_Click"/>
+                    <Button Content="LEAVE" Click="Leave_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Grid Grid.Row="1" Margin="0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="450"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="SHARED ROOM STATUS" Foreground="#78869A" FontWeight="Bold"/>
+                <Canvas Width="430" Height="205" Margin="0,6">
+                    <Border Canvas.Left="20" Canvas.Top="82" Width="390" Height="30"
+                            Background="#382A3442" BorderBrush="#566173" BorderThickness="1"/>
+                    <Border Canvas.Left="184" Canvas.Top="82" Width="30" Height="105"
+                            Background="#382A3442" BorderBrush="#566173" BorderThickness="1"/>
+                    <Border Canvas.Left="125" Canvas.Top="137" Width="70" Height="28"
+                            Background="#382A3442" BorderBrush="#566173" BorderThickness="1"/>
+                    <TextBlock Canvas.Left="170" Canvas.Top="88" Text="HALL" Foreground="#AEB9C8"/>
+                    <TextBlock Canvas.Left="129" Canvas.Top="143" Text="OFFICE" Foreground="#AEB9C8"/>
+                    <TextBlock Canvas.Left="178" Canvas.Top="119" Text="RECEPTION" Foreground="#AEB9C8"/>
+                    <Button x:Name="Room8" Tag="8" Canvas.Left="0" Canvas.Top="70"
+                            Content="8&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room6" Tag="6" Canvas.Left="55" Canvas.Top="15"
+                            Content="6&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room7" Tag="7" Canvas.Left="55" Canvas.Top="135"
+                            Content="7&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room1" Tag="1" Canvas.Left="270" Canvas.Top="15"
+                            Content="1&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room2" Tag="2" Canvas.Left="270" Canvas.Top="135"
+                            Content="2&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room3" Tag="3" Canvas.Left="330" Canvas.Top="15"
+                            Content="3&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room4" Tag="4" Canvas.Left="330" Canvas.Top="135"
+                            Content="4&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                    <Button x:Name="Room5" Tag="5" Canvas.Left="385" Canvas.Top="70"
+                            Content="5&#x0a;CLEAR" Style="{StaticResource RoomButton}" Click="Room_Click" MouseRightButtonUp="Room_RightClick"/>
+                </Canvas>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="ROOM ACTION:" Foreground="#78869A" FontSize="11"
+                               VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <Button x:Name="SafeModeButton" Content="SAFE (S)" Click="Mode_Click" Tag="Safe"/>
+                    <Button x:Name="AnomalyModeButton" Content="ANOMALY (A)" Click="Mode_Click" Tag="Anomaly"/>
+                    <Button x:Name="ClearModeButton" Content="CLEAR (C)" Click="Mode_Click" Tag="Clear"/>
+                    <Button x:Name="EventModeButton" Content="EVENT (E)" Click="Mode_Click" Tag="Event"/>
+                </StackPanel>
+                <TextBlock Text="Choose an action, then click a room. Keyboard: S/A/C/E, then 1–8."
+                           Foreground="#78869A" FontSize="11" Margin="0,3,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock x:Name="ShiftLabel" Text="SHIFT 1" Foreground="#78869A" FontWeight="Bold"/>
+                        <TextBlock x:Name="ShiftTimeText" Text="00:00" Foreground="White" FontSize="30"/>
+                    </StackPanel>
+                    <Button x:Name="ShiftButton" Content="START SHIFT" HorizontalAlignment="Right" Click="Shift_Click"/>
+                </Grid>
+                <Border Background="#202936" CornerRadius="7" Padding="8" Margin="0,8">
+                    <StackPanel>
+                        <Grid><TextBlock Text="SMALL COFFEE" Foreground="#AEB9C8"/>
+                            <TextBlock x:Name="SmallCoffeeText" Text="READY" Foreground="#64D69A" HorizontalAlignment="Right"/></Grid>
+                        <Grid Margin="0,6,0,0"><TextBlock Text="TALL COFFEE" Foreground="#AEB9C8"/>
+                            <TextBlock x:Name="TallCoffeeText" Text="LOCKED" Foreground="#78869A" HorizontalAlignment="Right"/></Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <Button Content="SMALL USED" Click="SmallCoffee_Click"/>
+                            <Button Content="TALL USED" Click="TallCoffee_Click"/>
+                            <Button Content="TALL LOCK" Click="TallToggle_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Button x:Name="ClearAllButton" Content="CLEAR ALL ROOMS" Click="ClearRooms_Click"/>
+                <TextBlock Text="TEAM" Foreground="#78869A" FontWeight="Bold" Margin="2,8,0,2"/>
+                <TextBlock x:Name="MembersText" Foreground="#D9E1EA" TextWrapping="Wrap"/>
+                <TextBlock x:Name="LastActionText" Foreground="#9BA8B9" Margin="0,8,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+            <Border x:Name="GuidePanel" Grid.ColumnSpan="3" Panel.ZIndex="10"
+                    HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Background="#F0141B24" BorderBrush="#536174" BorderThickness="1"
+                    CornerRadius="7" Padding="10,6" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock x:Name="GuideTitle" Text="TEAM COMMANDS"
+                               Foreground="#F3C969" FontWeight="Bold" FontSize="11"/>
+                    <TextBlock x:Name="GuideText" Text="End  Commands"
+                               Foreground="#D9E1EA" FontSize="11"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ConnectionDot" Width="9" Height="9" Fill="#E16B6B" Margin="0,0,6,0"/>
+                <TextBlock x:Name="StatusText" Text="Not connected" Foreground="#F3C969"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <CheckBox x:Name="TopmostCheck" Content="Always on top" Foreground="#AEB9C8"
+                          VerticalAlignment="Center" Margin="0,0,12,0"
+                          Checked="Topmost_Changed" Unchecked="Topmost_Changed"/>
+                <TextBlock x:Name="RevisionText" Foreground="#78869A" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
