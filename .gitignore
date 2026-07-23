@@ -1,6 +1,7 @@
 # .NET build output
 **/bin/
 **/obj/
+dist/
 
 # IDE and local agent metadata
 .vs/

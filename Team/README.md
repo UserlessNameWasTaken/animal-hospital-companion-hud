@@ -8,6 +8,10 @@ The Team fork contains:
 
 ## Local use
 
+For a double-clickable client, run `..\Publish Windows Apps.cmd` and distribute
+the entire `dist\AnimalHospitalTeamHUD` folder. Players start
+`AnimalHospitalTeam.Client.exe`; they do not need the .NET SDK.
+
 Start the relay:
 
 ```powershell

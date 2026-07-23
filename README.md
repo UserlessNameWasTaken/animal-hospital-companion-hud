@@ -21,6 +21,22 @@ The repository contains two applications:
 
 ## Run HUD
 
+### Build double-clickable Windows executables
+
+Double-click `Publish Windows Apps.cmd`. The resulting self-contained
+applications do not require teammates to install .NET:
+
+- `dist\AnimalHospitalRunHUD\AnimalHospitalOverlay.exe`
+- `dist\AnimalHospitalTeamHUD\AnimalHospitalTeam.Client.exe`
+- `dist\AnimalHospitalTeamRelay\AnimalHospitalTeam.Relay.exe`
+
+Keep each published folder together when copying or zipping it. The Run HUD
+folder includes the optional vision model and Python scripts; vision still
+requires Python and the packages in `requirements.txt`. Ordinary manual and
+movement HUD features do not require Python.
+
+### Run from source
+
 Double-click `Launch Overlay.cmd`, or run:
 
 ```powershell
