@@ -43,6 +43,24 @@ dataset/analysis/*
 # Offline model-development tools; runtime probe dependencies are retained.
 tools/benchmark_entry_signs.py
 
+# Private work-in-progress Run HUD and calibration tooling
+/AnimalHospitalOverlay.csproj
+/App.xaml
+/App.xaml.cs
+/KeyboardHook.cs
+/Launch Overlay.cmd
+/MainWindow.xaml
+/MainWindow.xaml.cs
+/Models.cs
+/MovementTracker.cs
+/RawMouseInput.cs
+/StateStore.cs
+/TraversalLogger.cs
+/VisionProbeService.cs
+/dataset/
+/requirements.txt
+/tools/
+
 # OS metadata
 Thumbs.db
 Desktop.ini
