@@ -1,98 +1,60 @@
-# Animal Hospital Companion HUD
+# Animal Hospital Team HUD
 
-A Windows companion HUD for the Roblox game **Animal Hospital (Anomaly)**. It
-tracks room status, shifts, and coffee timers without injecting into Roblox,
-reading Roblox memory, or automating gameplay.
+A tracking-free Windows coordination HUD for the Roblox game **Animal Hospital
+(Anomaly)**. Up to four players can share room status, shifts, and coffee
+timers through an authoritative WebSocket relay.
 
-The repository contains two applications:
-
-- **Run HUD** — personal HUD with manual controls, movement dead reckoning, and
-  an optional low-frequency location candidate probe.
-- **Team HUD** — tracking-free shared HUD for up to four players through an
-  authoritative WebSocket relay.
+The experimental single-player Run HUD, movement tracking, and vision tools are
+still being calibrated and are intentionally not included in this public
+release.
 
 ## Requirements
 
 - Windows 11
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) to build from
+  source
 - Borderless-windowed Roblox is recommended
-- Python 3 with the packages in `requirements.txt` only if using the optional
-  vision candidate probe
 
-## Run HUD
+## Build double-clickable executables
 
-### Build double-clickable Windows executables
+Double-click `Publish Windows Apps.cmd`. It creates two self-contained Windows
+applications:
 
-Double-click `Publish Windows Apps.cmd`. The resulting self-contained
-applications do not require teammates to install .NET:
-
-- `dist\AnimalHospitalRunHUD\AnimalHospitalOverlay.exe`
 - `dist\AnimalHospitalTeamHUD\AnimalHospitalTeam.Client.exe`
 - `dist\AnimalHospitalTeamRelay\AnimalHospitalTeam.Relay.exe`
 
-Keep each published folder together when copying or zipping it. The Run HUD
-folder includes the optional vision model and Python scripts; vision still
-requires Python and the packages in `requirements.txt`. Ordinary manual and
-movement HUD features do not require Python.
+The published Team HUD does not require teammates to install .NET. Keep each
+published folder together when copying or zipping it.
 
-### Run from source
+## Run from source
 
-Double-click `Launch Overlay.cmd`, or run:
+Start the relay:
 
 ```powershell
-dotnet run --project AnimalHospitalOverlay.csproj
+dotnet run --project Team\AnimalHospitalTeam.Relay --urls http://127.0.0.1:5188
 ```
 
-Commands are sequential, not simultaneous. Press `End`, then the remaining
-keys within six seconds.
+Start up to four Team HUD clients:
 
-| Sequence | Action |
-| --- | --- |
-| `End`, `1–8`, `PgUp` | Mark patient safe |
-| `End`, `1–8`, `PgDown` | Mark patient anomalous |
-| `End`, `1–8`, `Del` | Clear patient |
-| `End`, `1–8`, `=` / `-` | Set / clear room event |
-| `End`, `1–8`, `Backspace` | Clear patient and event |
-| `End`, `-` / `=` | Start small / tall coffee timer |
-| `End`, `\` | Start or finish a shift |
-| `End`, `]` | Reset the current HUD and timers |
-| `End`, `PgUp` | Lock or unlock the tall coffee machine |
-| `End`, `Backspace` | Start a new run |
-| `End`, `Del` | Clear every room |
-| `End`, `H` | Hide or restore the HUD |
+```powershell
+dotnet run --project Team\AnimalHospitalTeam.Client
+```
 
-Movement anchors, direction resets, calibration controls, and the experimental
-vision observer are explained in the HUD itself. Tracking estimates never
-change shared patient or event state automatically.
+The first player selects **Create** and shares the generated team code and
+private key. Teammates enter unique names and join with those values.
 
-Local state is stored under
-`%LOCALAPPDATA%\AnimalHospitalOverlay`. It is not stored in this repository.
+See [Team/README.md](Team/README.md) for interaction details, automatic
+reconnection behavior, and the complete global `End` command table.
 
-## Team HUD
-
-See [Team/README.md](Team/README.md) for relay and client instructions,
-reconnection behavior, shared controls, and the full global keybind table.
+## Current relay limitations
 
 The development relay keeps rooms in memory. Restarting it removes active
-teams. Before using it over the public Internet, deploy it behind HTTPS/WSS and
-add operational protections such as room expiration and rate limiting.
-
-## Optional vision candidate probe
-
-Install its Python dependencies:
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-The probe captures one downscaled desktop frame every two seconds only while
-Roblox is foregrounded. Its result is diagnostic and never changes HUD state.
-Raw gameplay captures and model-development artifacts are intentionally
-excluded from version control; only the compact runtime model is included.
+teams. Public Internet deployment should use HTTPS/WSS and add room expiration,
+rate limiting, and appropriate operational monitoring.
 
 ## Safety and scope
 
 This is an external accessibility and coordination companion. It does not
-modify the Roblox client, access process memory, inject code, simulate player
-input, or bypass game systems. Users remain responsible for following Roblox
-and game-specific rules.
+modify the Roblox client, read process memory, inject code, automate gameplay,
+or bypass game systems. Users remain responsible for following Roblox and
+game-specific rules.
