@@ -23,8 +23,11 @@ Windows SmartScreen may show an **Unknown publisher** warning because this
 personal project is not code-signed. Select **More info**, verify that the file
 came from this repository, and choose **Run anyway** if you trust it.
 
-Ordinary players only need the Team HUD ZIP. The separate relay ZIP is for the
-person hosting the shared server.
+Ordinary players only need the Team HUD ZIP.
+
+The host downloads **AnimalHospitalTeamHost-Windows-x64.zip**, extracts it, and
+double-clicks **Start Hosting.cmd**. This starts both the relay and Team HUD on
+the matching local address. Keep the relay window open throughout the session.
 
 ## Use the Team HUD
 
@@ -44,6 +47,7 @@ Double-click `Publish Windows Apps.cmd` to create:
 
 - `dist\AnimalHospitalTeamHUD-Windows-x64.zip`
 - `dist\AnimalHospitalTeamRelay-Windows-x64.zip`
+- `dist\AnimalHospitalTeamHost-Windows-x64.zip`
 
 Or start the projects directly:
 

@@ -4,6 +4,7 @@ $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $distRoot = Join-Path $projectRoot 'dist'
 $teamHudOutput = Join-Path $distRoot 'AnimalHospitalTeamHUD'
 $relayOutput = Join-Path $distRoot 'AnimalHospitalTeamRelay'
+$hostOutput = Join-Path $distRoot 'AnimalHospitalTeamHost'
 
 function Publish-App {
     param(
@@ -79,10 +80,41 @@ pause
 Set-Content -LiteralPath (Join-Path $relayOutput 'Start Local Relay.cmd') `
     -Value $relayLauncher -Encoding ASCII
 
+New-Item -ItemType Directory -Force -Path $hostOutput | Out-Null
+Copy-Item -LiteralPath (Join-Path $teamHudOutput 'AnimalHospitalTeamHUD.exe') -Destination $hostOutput
+Copy-Item -LiteralPath (Join-Path $relayOutput 'AnimalHospitalTeamRelay.exe') -Destination $hostOutput
+
+$hostLauncher = @'
+@echo off
+cd /d "%~dp0"
+start "Animal Hospital Team Relay - keep this open" "%~dp0AnimalHospitalTeamRelay.exe"
+timeout /t 2 /nobreak >nul
+start "" "%~dp0AnimalHospitalTeamHUD.exe"
+exit
+'@
+$hostInstructions = @'
+ANIMAL HOSPITAL TEAM HOST
+=========================
+
+1. Double-click Start Hosting.cmd.
+2. Keep the relay window open for the entire play session.
+3. In the Team HUD, enter your name and select CREATE.
+4. Share the generated team code and private key with your teammates.
+
+The local relay address is http://127.0.0.1:5188.
+Closing the relay window ends the server and removes its in-memory teams.
+'@
+Set-Content -LiteralPath (Join-Path $hostOutput 'Start Hosting.cmd') `
+    -Value $hostLauncher -Encoding ASCII
+Set-Content -LiteralPath (Join-Path $hostOutput 'START HERE.txt') `
+    -Value $hostInstructions -Encoding UTF8
+
 $teamZip = Join-Path $distRoot 'AnimalHospitalTeamHUD-Windows-x64.zip'
 $relayZip = Join-Path $distRoot 'AnimalHospitalTeamRelay-Windows-x64.zip'
+$hostZip = Join-Path $distRoot 'AnimalHospitalTeamHost-Windows-x64.zip'
 Compress-Archive -Path (Join-Path $teamHudOutput '*') -DestinationPath $teamZip -CompressionLevel Optimal
 Compress-Archive -Path (Join-Path $relayOutput '*') -DestinationPath $relayZip -CompressionLevel Optimal
+Compress-Archive -Path (Join-Path $hostOutput '*') -DestinationPath $hostZip -CompressionLevel Optimal
 
 Write-Host ''
 Write-Host 'Published:'
@@ -90,3 +122,4 @@ Write-Host "  Team HUD:   $teamHudOutput\AnimalHospitalTeamHUD.exe"
 Write-Host "  Team Relay: $relayOutput\AnimalHospitalTeamRelay.exe"
 Write-Host "  Player ZIP: $teamZip"
 Write-Host "  Relay ZIP:  $relayZip"
+Write-Host "  Host ZIP:   $hostZip"

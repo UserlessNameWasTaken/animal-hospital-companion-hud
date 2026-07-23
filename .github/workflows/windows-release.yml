@@ -36,6 +36,7 @@ jobs:
           path: |
             dist/AnimalHospitalTeamHUD-Windows-x64.zip
             dist/AnimalHospitalTeamRelay-Windows-x64.zip
+            dist/AnimalHospitalTeamHost-Windows-x64.zip
           if-no-files-found: error
 
       - name: Create GitHub release
@@ -47,6 +48,7 @@ jobs:
           gh release create $tag `
             "dist/AnimalHospitalTeamHUD-Windows-x64.zip#Team HUD for players" `
             "dist/AnimalHospitalTeamRelay-Windows-x64.zip#Relay package for hosts" `
+            "dist/AnimalHospitalTeamHost-Windows-x64.zip#Combined HUD and relay for the team host" `
             --target "${{ github.sha }}" `
             --title "Animal Hospital Team HUD $tag" `
-            --notes "Download **AnimalHospitalTeamHUD-Windows-x64.zip**, extract it, and double-click **AnimalHospitalTeamHUD.exe**. The relay ZIP is only for the person hosting the shared server."
+            --notes "Players download **AnimalHospitalTeamHUD-Windows-x64.zip** and run **AnimalHospitalTeamHUD.exe**. The host downloads **AnimalHospitalTeamHost-Windows-x64.zip** and runs **Start Hosting.cmd**."
