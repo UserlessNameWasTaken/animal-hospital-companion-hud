@@ -6,6 +6,8 @@ using System.Text.Json;
 using AnimalHospitalTeam.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
+if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
+    builder.WebHost.UseUrls("http://127.0.0.1:5188");
 var app = builder.Build();
 var rooms = new ConcurrentDictionary<string, TeamRoom>(StringComparer.OrdinalIgnoreCase);
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);

@@ -12,6 +12,10 @@ Ordinary players can download `AnimalHospitalTeamHUD-Windows-x64.zip` from the
 repository's Releases page, extract it, and start `AnimalHospitalTeamHUD.exe`.
 They do not need the .NET SDK or a command prompt.
 
+The team host can instead download `AnimalHospitalTeamHost-Windows-x64.zip`
+and double-click `Start Hosting.cmd`. It launches the local relay on port 5188
+and then opens the Team HUD.
+
 Start the relay:
 
 ```powershell

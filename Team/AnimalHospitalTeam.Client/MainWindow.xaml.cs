@@ -3,6 +3,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Net.Http;
+using System.Net.WebSockets;
 using AnimalHospitalTeam.Shared;
 
 namespace AnimalHospitalTeam.Client;
@@ -95,6 +97,11 @@ public partial class MainWindow : Window
             SecretBox.Text = created.Secret;
             await JoinAsync();
         }
+        catch (HttpRequestException)
+        {
+            StatusText.Text =
+                $"Relay unavailable at {ServerBox.Text}. Start the relay first, then try Create again.";
+        }
         catch (Exception ex) { StatusText.Text = $"Create failed: {ex.Message}"; }
     }
 
@@ -108,6 +115,11 @@ public partial class MainWindow : Window
         {
             await _connection.ConnectAsync(ServerBox.Text, RoomCodeBox.Text.Trim(),
                 SecretBox.Text.Trim(), NameBox.Text.Trim());
+        }
+        catch (WebSocketException)
+        {
+            StatusText.Text =
+                $"Relay unavailable at {ServerBox.Text}. Check the address and make sure the host relay is running.";
         }
         catch (Exception ex) { StatusText.Text = $"Join failed: {ex.Message}"; }
     }
