@@ -62,6 +62,9 @@ The development relay keeps rooms in memory. Restarting it removes active
 teams. Public Internet deployment should use HTTPS/WSS and add room expiration,
 rate limiting, and appropriate operational monitoring.
 
+**NOTE**
+Public Deployments now use HTTPS / WSS and have room expiration, rate limits, and server life tracking to keep the relay running smoothly. Restarting the relay can still cause team servers to shut down, so the relay tab should be kept open at all times.
+
 ## Safety and scope
 
 This is an external accessibility and coordination companion. It does not
