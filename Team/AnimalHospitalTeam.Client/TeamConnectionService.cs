@@ -26,11 +26,37 @@ public sealed class TeamConnectionService : IDisposable
     public event Action<bool>? ConnectionChanged;
     public bool IsConnected => _socket?.State == WebSocketState.Open;
 
+    public async Task<string> TestRelayAsync(string server)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        var baseUri = NormalizeHttpBaseUri(server);
+        using var response = await http.GetAsync(new Uri(baseUri, "health"));
+        var body = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"Relay health check returned HTTP {(int)response.StatusCode} ({response.ReasonPhrase}).");
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("status", out var status) &&
+                status.GetString() == "ok")
+                return "Relay responded successfully.";
+        }
+        catch (JsonException) { }
+
+        throw new HttpRequestException(
+            "The address responded, but not with the relay health response. " +
+            "Check the tunnel service URL and any Cloudflare Access login policy.");
+    }
+
     public async Task<CreateRoomResponse> CreateRoomAsync(string server)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        using var response = await http.PostAsync($"{server.TrimEnd('/')}/api/rooms", null);
-        response.EnsureSuccessStatusCode();
+        var baseUri = NormalizeHttpBaseUri(server);
+        using var response = await http.PostAsync(new Uri(baseUri, "api/rooms"), null);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"Create room returned HTTP {(int)response.StatusCode} ({response.ReasonPhrase}).");
         return await response.Content.ReadFromJsonAsync<CreateRoomResponse>(_json)
                ?? throw new InvalidOperationException("Relay returned no room.");
     }
@@ -38,7 +64,7 @@ public sealed class TeamConnectionService : IDisposable
     public async Task ConnectAsync(string server, string room, string secret, string name)
     {
         Disconnect();
-        _details = new ConnectionDetails(server.TrimEnd('/'), room, secret, name);
+        _details = new ConnectionDetails(NormalizeHttpBaseUri(server), room, secret, name);
         _sessionCancellation = new CancellationTokenSource();
         _hasConnected = false;
 
@@ -72,6 +98,7 @@ public sealed class TeamConnectionService : IDisposable
                 var details = _details ?? throw new InvalidOperationException("Missing team details.");
                 var socket = new ClientWebSocket();
                 socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+                socket.Options.SetRequestHeader("Authorization", $"Bearer {details.Secret}");
                 _socket = socket;
 
                 StatusChanged?.Invoke(attempt == 0 ? "Connecting…" : $"Reconnecting… attempt {attempt}");
@@ -158,16 +185,48 @@ public sealed class TeamConnectionService : IDisposable
 
     private static Uri BuildUri(ConnectionDetails details)
     {
-        var wsBase = details.Server
-            .Replace("https://", "wss://", StringComparison.OrdinalIgnoreCase)
-            .Replace("http://", "ws://", StringComparison.OrdinalIgnoreCase);
-        return new Uri($"{wsBase}/ws?room={Uri.EscapeDataString(details.Room)}" +
-                       $"&secret={Uri.EscapeDataString(details.Secret)}" +
-                       $"&name={Uri.EscapeDataString(details.Name)}");
+        var builder = new UriBuilder(details.Server)
+        {
+            Scheme = details.Server.Scheme == Uri.UriSchemeHttps ? "wss" : "ws",
+            Port = details.Server.IsDefaultPort ? -1 : details.Server.Port,
+            Path = "ws",
+            Query = $"room={Uri.EscapeDataString(details.Room)}" +
+                    $"&name={Uri.EscapeDataString(details.Name)}"
+        };
+        return builder.Uri;
     }
 
-    private static string FriendlyMessage(Exception ex) =>
-        ex is WebSocketException ? "relay unavailable" : ex.Message;
+    private static Uri NormalizeHttpBaseUri(string server)
+    {
+        var value = server.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Enter a relay address.");
+
+        if (!value.Contains("://", StringComparison.Ordinal))
+            value = $"https://{value}";
+        else if (value.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
+            value = $"https://{value[6..]}";
+        else if (value.StartsWith("ws://", StringComparison.OrdinalIgnoreCase))
+            value = $"http://{value[5..]}";
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+            uri.Scheme is not ("http" or "https") ||
+            string.IsNullOrWhiteSpace(uri.Host))
+            throw new ArgumentException(
+                "Use a relay address such as https://relay.example.com.");
+
+        if (uri.AbsolutePath is not ("" or "/") || !string.IsNullOrEmpty(uri.Query))
+            throw new ArgumentException(
+                "Enter only the relay base address; remove /health, /api/rooms, /ws, and query text.");
+
+        return new Uri($"{uri.Scheme}://{uri.Authority}/");
+    }
+
+    private static string FriendlyMessage(Exception ex) => ex switch
+    {
+        WebSocketException socket => $"WebSocket failed ({socket.WebSocketErrorCode}): {socket.Message}",
+        _ => ex.Message
+    };
 
     public void Disconnect()
     {
@@ -191,5 +250,5 @@ public sealed class TeamConnectionService : IDisposable
         _sendGate.Dispose();
     }
 
-    private sealed record ConnectionDetails(string Server, string Room, string Secret, string Name);
+    private sealed record ConnectionDetails(Uri Server, string Room, string Secret, string Name);
 }
