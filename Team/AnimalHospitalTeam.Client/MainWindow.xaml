@@ -44,9 +44,11 @@
                 <TextBox x:Name="NameBox" Grid.Column="0" ToolTip="Your team display name"/>
                 <TextBox x:Name="RoomCodeBox" Grid.Column="1" ToolTip="Team code"/>
                 <TextBox x:Name="SecretBox" Grid.Column="2" ToolTip="Private team key"/>
-                <TextBox x:Name="ServerBox" Grid.Column="3" Text="http://127.0.0.1:5188"
+                <TextBox x:Name="ServerBox" Grid.Column="3" Text="https://relay.ahospitalhud.com"
                          ToolTip="Relay server URL"/>
                 <StackPanel Grid.Column="4" Orientation="Horizontal">
+                    <Button Content="TEST" Click="TestRelay_Click"
+                            ToolTip="Check the relay health endpoint"/>
                     <Button Content="CREATE" Click="Create_Click"/>
                     <Button Content="JOIN" Click="Join_Click"/>
                     <Button Content="LEAVE" Click="Leave_Click"/>

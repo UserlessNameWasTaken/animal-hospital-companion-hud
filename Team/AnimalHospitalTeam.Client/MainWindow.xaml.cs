@@ -109,12 +109,33 @@ public partial class MainWindow : Window
             SecretBox.Text = created.Secret;
             await JoinAsync();
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            StatusText.Text =
-                $"Relay unavailable at {ServerBox.Text}. Start the relay first, then try Create again.";
+            StatusText.Text = $"Create failed: {ex.Message}";
         }
         catch (Exception ex) { StatusText.Text = $"Create failed: {ex.Message}"; }
+    }
+
+    private async void TestRelay_Click(object sender, RoutedEventArgs e)
+    {
+        StatusText.Text = "Testing relay...";
+        try
+        {
+            await _connection.TestRelayAsync(ServerBox.Text);
+            StatusText.Text = "Relay health check passed.";
+        }
+        catch (TaskCanceledException)
+        {
+            StatusText.Text = "Relay test timed out after 10 seconds.";
+        }
+        catch (HttpRequestException ex)
+        {
+            StatusText.Text = $"Relay test failed: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Relay address problem: {ex.Message}";
+        }
     }
 
     private async void Join_Click(object sender, RoutedEventArgs e) => await JoinAsync();
@@ -128,10 +149,9 @@ public partial class MainWindow : Window
             await _connection.ConnectAsync(ServerBox.Text, RoomCodeBox.Text.Trim(),
                 SecretBox.Text.Trim(), NameBox.Text.Trim());
         }
-        catch (WebSocketException)
+        catch (WebSocketException ex)
         {
-            StatusText.Text =
-                $"Relay unavailable at {ServerBox.Text}. Check the address and make sure the host relay is running.";
+            StatusText.Text = $"Join failed: {ex.Message}";
         }
         catch (Exception ex) { StatusText.Text = $"Join failed: {ex.Message}"; }
     }

@@ -3,27 +3,79 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using AnimalHospitalTeam.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.SingleLine = true;
+    options.TimestampFormat = "HH:mm:ss ";
+});
 if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:5188");
+var maxRooms = Math.Max(1, builder.Configuration.GetValue("Relay:MaxRooms", 100));
+var roomLifetime = TimeSpan.FromSeconds(
+    Math.Max(1, builder.Configuration.GetValue("Relay:RoomLifetimeSeconds", 21_600)));
+var createRoomTokenLimit = Math.Max(
+    1, builder.Configuration.GetValue("Relay:CreateRoomTokenLimit", 3));
+var createRoomTokensPerPeriod = Math.Max(
+    1, builder.Configuration.GetValue("Relay:CreateRoomTokensPerPeriod", 1));
+var createRoomReplenishment = TimeSpan.FromSeconds(Math.Max(
+    1, builder.Configuration.GetValue("Relay:CreateRoomReplenishmentSeconds", 60)));
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("create-room", context =>
+    {
+        var clientIp = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
+                       ?? context.Connection.RemoteIpAddress?.ToString()
+                       ?? "unknown";
+        return RateLimitPartition.GetTokenBucketLimiter(clientIp, _ =>
+            new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = createRoomTokenLimit,
+                TokensPerPeriod = createRoomTokensPerPeriod,
+                ReplenishmentPeriod = createRoomReplenishment,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+});
+
 var app = builder.Build();
 var rooms = new ConcurrentDictionary<string, TeamRoom>(StringComparer.OrdinalIgnoreCase);
+var roomGate = new object();
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
+app.UseRateLimiter();
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", rooms = rooms.Count }));
+app.MapGet("/health", () =>
+{
+    CleanupExpiredRooms();
+    return Results.Ok(new { status = "ok", rooms = rooms.Count, capacity = maxRooms });
+});
 
 app.MapPost("/api/rooms", () =>
 {
-    string code;
-    do code = RandomCode(6); while (rooms.ContainsKey(code));
-    var secret = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
-    rooms[code] = new TeamRoom(code, secret);
-    return Results.Ok(new CreateRoomResponse { Code = code, Secret = secret });
-});
+    lock (roomGate)
+    {
+        CleanupExpiredRooms();
+        if (rooms.Count >= maxRooms)
+            return Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "Relay room capacity reached. Try again later.");
+
+        string code;
+        do code = RandomCode(6); while (rooms.ContainsKey(code));
+        var secret = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        rooms[code] = new TeamRoom(code, secret);
+        return Results.Ok(new CreateRoomResponse { Code = code, Secret = secret });
+    }
+}).RequireRateLimiting("create-room");
 
 app.Map("/ws", async context =>
 {
@@ -34,12 +86,12 @@ app.Map("/ws", async context =>
     }
 
     var code = context.Request.Query["room"].ToString().Trim().ToUpperInvariant();
-    var secret = context.Request.Query["secret"].ToString();
     var requestedName = context.Request.Query["name"].ToString().Trim();
+    var secret = ReadBearerSecret(context);
     if (!rooms.TryGetValue(code, out var room) || !CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(room.Secret), Encoding.UTF8.GetBytes(secret)))
+            Encoding.UTF8.GetBytes(room.Secret), Encoding.UTF8.GetBytes(secret ?? "")))
     {
-        context.Response.StatusCode = 403;
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         return;
     }
     if (requestedName.Length is < 1 or > 24)
@@ -87,6 +139,27 @@ app.Map("/ws", async context =>
 
 app.Run();
 
+void CleanupExpiredRooms()
+{
+    var expiration = DateTime.UtcNow - roomLifetime;
+    foreach (var entry in rooms)
+    {
+        if (entry.Value.ConnectionCount == 0 &&
+            entry.Value.LastActivityUtc < expiration)
+            rooms.TryRemove(entry.Key, out _);
+    }
+}
+
+static string? ReadBearerSecret(HttpContext context)
+{
+    const string prefix = "Bearer ";
+    var authorization = context.Request.Headers.Authorization.ToString();
+    if (!authorization.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        return null;
+    var secret = authorization[prefix.Length..].Trim();
+    return secret.Length == 0 ? null : secret;
+}
+
 static string RandomCode(int length)
 {
     const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -110,6 +183,11 @@ sealed class TeamRoom(string code, string secret)
     private readonly TeamState _state = new();
     public string Code { get; } = code;
     public string Secret { get; } = secret;
+    public DateTime LastActivityUtc { get; private set; } = DateTime.UtcNow;
+    public int ConnectionCount
+    {
+        get { lock (_gate) return _connections.Count; }
+    }
 
     public TeamConnection? TryJoin(string name, WebSocket socket, out WebSocket? replaced)
     {
@@ -123,6 +201,7 @@ sealed class TeamRoom(string code, string secret)
                 return null;
             var connection = new TeamConnection(Guid.NewGuid(), name, socket);
             _connections[connection.Id] = connection;
+            LastActivityUtc = DateTime.UtcNow;
             UpdateMembers();
             return connection;
         }
@@ -133,6 +212,7 @@ sealed class TeamRoom(string code, string secret)
         lock (_gate)
         {
             _connections.Remove(id);
+            LastActivityUtc = DateTime.UtcNow;
             UpdateMembers();
         }
     }
@@ -161,6 +241,7 @@ sealed class TeamRoom(string code, string secret)
             };
             if (changed)
             {
+                LastActivityUtc = DateTime.UtcNow;
                 _state.Revision++;
                 _state.LastChangedBy = actor;
                 _state.LastAction = action.Type;

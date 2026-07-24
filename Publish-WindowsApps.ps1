@@ -87,7 +87,7 @@ Copy-Item -LiteralPath (Join-Path $relayOutput 'AnimalHospitalTeamRelay.exe') -D
 $hostLauncher = @'
 @echo off
 cd /d "%~dp0"
-start "Animal Hospital Team Relay - keep this open" "%~dp0AnimalHospitalTeamRelay.exe"
+start "Animal Hospital Team Relay - keep this open" "%~dp0AnimalHospitalTeamRelay.exe" --urls http://127.0.0.1:5188
 timeout /t 2 /nobreak >nul
 start "" "%~dp0AnimalHospitalTeamHUD.exe"
 exit

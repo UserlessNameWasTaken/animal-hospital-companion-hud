@@ -22,6 +22,26 @@ Start the relay:
 dotnet run --project AnimalHospitalTeam.Relay --urls http://127.0.0.1:5188
 ```
 
+For the hosted team service, configure the Cloudflare Tunnel origin/service as
+`http://127.0.0.1:5188`. Players enter only the public base URL:
+`https://relay.ahospitalhud.com`. Do not add `/health`, `/ws`, or port `5188`
+to the public address.
+
+The public hostname must be a published application route attached to the
+tunnel. Its DNS record should point to the tunnel's
+`<tunnel-id>.cfargotunnel.com` hostname. Do not create an A record pointing the
+public hostname to `127.0.0.1`; that address always means the current user's
+own computer.
+
+With the relay and `cloudflared` running, double-click `Run Tunnel Test.cmd` to
+verify public health, room creation, secure WebSockets, and synchronization
+between two simulated clients. The .NET 8 SDK is required for this developer
+test. You can test another deployment from a terminal with:
+
+```powershell
+dotnet run --project AnimalHospitalTeam.SmokeTests -- https://your-relay-hostname.example
+```
+
 Start up to four clients:
 
 ```powershell
@@ -73,6 +93,29 @@ actions.
 ## Current relay limitations
 
 The relay stores state in memory, so restarting it removes all teams. It does
-not yet include room expiration, durable storage, rate limiting, or a packaged
-public deployment. Internet deployment should use HTTPS/WSS rather than an
-unencrypted public endpoint.
+not include durable storage, so restarting it removes active teams. Internet
+deployment must use HTTPS/WSS rather than an unencrypted public endpoint.
+
+## Relay safeguards
+
+- Room creation uses a per-IP token bucket: three immediate creations, then
+  one token per minute. Rejected requests return HTTP 429.
+- At most 100 rooms may exist at once. Inactive rooms expire after six hours;
+  rooms with connected players are not expired.
+- WebSocket team secrets are sent in the `Authorization: Bearer` header, never
+  in the URL query string.
+- The relay trusts `CF-Connecting-IP` because its default listener is
+  localhost-only. Do not expose the relay port directly to the Internet.
+
+The defaults can be changed through ASP.NET Core configuration:
+
+| Setting | Default |
+| --- | ---: |
+| `Relay__MaxRooms` | `100` |
+| `Relay__RoomLifetimeSeconds` | `21600` |
+| `Relay__CreateRoomTokenLimit` | `3` |
+| `Relay__CreateRoomTokensPerPeriod` | `1` |
+| `Relay__CreateRoomReplenishmentSeconds` | `60` |
+
+The bearer-authentication change is intentionally incompatible with older
+HUD builds. Deploy the updated relay and distribute the updated HUD together.
